@@ -1,4 +1,4 @@
-FROM node:22.12-alpine AS builder
+FROM node:22.15-alpine AS builder
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ RUN npm run build
 # Install only production dependencies
 RUN npm ci --omit=dev --ignore-scripts
 
-FROM node:22-alpine AS release
+FROM node:22.15-alpine AS release
 
 WORKDIR /app
 
