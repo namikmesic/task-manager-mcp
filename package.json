@@ -1,0 +1,30 @@
+{
+  "name": "@modelcontextprotocol/server-task-manager",
+  "version": "0.1.0",
+  "description": "MCP server for managing PRDs, Epics, and Tasks in a hierarchical project structure",
+  "license": "MIT",
+  "author": "Your Name",
+  "homepage": "https://github.com/yourusername/task-manager-mcp",
+  "bugs": "https://github.com/yourusername/task-manager-mcp/issues",
+  "type": "module",
+  "bin": {
+    "mcp-server-task-manager": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && shx chmod +x dist/*.js",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "dev": "node --watch dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "shx": "^0.3.4",
+    "typescript": "^5.6.2"
+  }
+}
