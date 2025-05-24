@@ -5,18 +5,21 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
+COPY eslint.config.js ./
 
 # Install all dependencies for building
 RUN npm ci
 
 # Copy source code
 COPY index.ts ./
+COPY resourceManager.ts ./
+COPY types.ts ./
 
 # Build the TypeScript code
 RUN npm run build
 
 # Install only production dependencies
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 FROM node:22-alpine AS release
 
