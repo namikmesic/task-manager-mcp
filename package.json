@@ -1,6 +1,6 @@
 {
   "name": "@modelcontextprotocol/server-task-manager",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for managing PRDs, Epics, and Tasks in a hierarchical project structure",
   "license": "MIT",
   "author": "Your Name",
@@ -15,16 +15,41 @@
   ],
   "scripts": {
     "build": "tsc && shx chmod +x dist/*.js",
-    "prepare": "npm run build",
+    "prepare": "husky",
     "watch": "tsc --watch",
-    "dev": "node --watch dist/index.js"
+    "dev": "node --watch dist/index.js",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run lint",
+    "format": "prettier --write \"**/*.{ts,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,json,md}\""
+  },
+  "lint-staged": {
+    "*.ts": [
+      "bash -c 'tsc --noEmit'",
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.0.1"
   },
   "devDependencies": {
     "@types/node": "^22",
+    "@typescript-eslint/eslint-plugin": "^8.32.1",
+    "@typescript-eslint/parser": "^8.32.1",
+    "eslint": "^9.27.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.0.0",
+    "prettier": "^3.5.3",
     "shx": "^0.3.4",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.32.1"
   }
 }
