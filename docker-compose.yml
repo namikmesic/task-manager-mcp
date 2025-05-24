@@ -1,0 +1,53 @@
+services:
+  # MCP server for production use
+  task-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: release
+    image: task-manager-mcp:latest
+    container_name: task-manager-mcp
+    stdin_open: true
+    tty: true
+    environment:
+      - NODE_ENV=production
+      - TASK_FILE_PATH=/app/data/tasks.json
+      - NODE_OPTIONS=--max-old-space-size=512
+    volumes:
+      - task-data:/app/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    # Note: This is an MCP server that communicates via stdio
+    # It should be connected to by an MCP client, not accessed via HTTP
+
+  # Development configuration
+  task-manager-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: task-manager-mcp:dev
+    container_name: task-manager-mcp-dev
+    stdin_open: true
+    tty: true
+    environment:
+      - NODE_ENV=development
+      - TASK_FILE_PATH=/app/data/tasks.json
+    volumes:
+      - ./dist:/app/dist
+      - ./data:/app/data
+      - .:/app:ro
+      - /app/node_modules
+    command: ["npm", "run", "dev"]
+    profiles:
+      - dev
+
+volumes:
+  task-data:
+    driver: local
