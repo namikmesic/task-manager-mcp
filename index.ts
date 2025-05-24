@@ -14,6 +14,7 @@ import {
 import { promises as fs } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { randomUUID } from "crypto";
 import { ResourceManager } from "./resourceManager.js";
 import type {
   PRD,
@@ -32,11 +33,17 @@ import type {
 import { isErrorWithCode, isPRD, isEpic, isTask } from "./types.js";
 
 // Define data file path using environment variable with fallback
-const defaultDataPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "tasks.json");
+const defaultDataPath = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "tasks.json",
+);
 const TASK_FILE_PATH = process.env.TASK_FILE_PATH
   ? path.isAbsolute(process.env.TASK_FILE_PATH)
     ? process.env.TASK_FILE_PATH
-    : path.join(path.dirname(fileURLToPath(import.meta.url)), process.env.TASK_FILE_PATH)
+    : path.join(
+        path.dirname(fileURLToPath(import.meta.url)),
+        process.env.TASK_FILE_PATH,
+      )
   : defaultDataPath;
 
 // All types are now imported from types.ts
@@ -71,7 +78,7 @@ export class TaskManager {
           }
           return acc;
         },
-        { prds: [], epics: [], tasks: [] }
+        { prds: [], epics: [], tasks: [] },
       );
     } catch (error) {
       if (isErrorWithCode(error) && error.code === "ENOENT") {
@@ -91,12 +98,14 @@ export class TaskManager {
   }
 
   private generateId(prefix: string): string {
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substring(2, 5);
-    return `${prefix}_${timestamp}_${random}`;
+    return `${prefix}_${randomUUID()}`;
   }
 
-  async createPRD(title: string, description: string, owner: string): Promise<PRD> {
+  async createPRD(
+    title: string,
+    description: string,
+    owner: string,
+  ): Promise<PRD> {
     const data = await this.loadData();
     const now = new Date().toISOString();
     const prd: PRD = {
@@ -117,7 +126,10 @@ export class TaskManager {
     return prd;
   }
 
-  async updatePRD(id: string, updates: Partial<Omit<PRD, "id" | "created_at">>): Promise<PRD> {
+  async updatePRD(
+    id: string,
+    updates: Partial<Omit<PRD, "id" | "created_at">>,
+  ): Promise<PRD> {
     const data = await this.loadData();
     const prdIndex = data.prds.findIndex((p) => p.id === id);
     if (prdIndex === -1) {
@@ -158,7 +170,7 @@ export class TaskManager {
       title: string;
       description: string;
       priority: "low" | "medium" | "high";
-    }>
+    }>,
   ): Promise<Epic[]> {
     const data = await this.loadData();
     const now = new Date().toISOString();
@@ -183,7 +195,7 @@ export class TaskManager {
 
   async updateEpic(
     id: string,
-    updates: Partial<Omit<Epic, "id" | "prd_id" | "created_at">>
+    updates: Partial<Omit<Epic, "id" | "prd_id" | "created_at">>,
   ): Promise<Epic> {
     const data = await this.loadData();
     const epicIndex = data.epics.findIndex((e) => e.id === id);
@@ -221,7 +233,7 @@ export class TaskManager {
       assignee?: string;
       due_date?: string;
       dependencies?: string[];
-    }>
+    }>,
   ): Promise<Task[]> {
     const data = await this.loadData();
     const now = new Date().toISOString();
@@ -249,7 +261,7 @@ export class TaskManager {
 
   async updateTask(
     id: string,
-    updates: Partial<Omit<Task, "id" | "epic_id" | "created_at">>
+    updates: Partial<Omit<Task, "id" | "epic_id" | "created_at">>,
   ): Promise<Task> {
     const data = await this.loadData();
     const taskIndex = data.tasks.findIndex((t) => t.id === id);
@@ -295,7 +307,9 @@ export class TaskManager {
     await this.saveData(data);
   }
 
-  async readProject(prdId?: string): Promise<ProjectWithEpics | ProjectWithEpics[]> {
+  async readProject(
+    prdId?: string,
+  ): Promise<ProjectWithEpics | ProjectWithEpics[]> {
     const data = await this.loadData();
 
     if (prdId) {
@@ -335,7 +349,7 @@ export class TaskManager {
 
   async searchItems(
     query: string,
-    itemType?: "prd" | "epic" | "task"
+    itemType?: "prd" | "epic" | "task",
   ): Promise<{ prds?: PRD[]; epics?: Epic[]; tasks?: Task[] }> {
     const data = await this.loadData();
     const lowerQuery = query.toLowerCase();
@@ -347,7 +361,7 @@ export class TaskManager {
         (p) =>
           p.title.toLowerCase().includes(lowerQuery) ||
           p.description.toLowerCase().includes(lowerQuery) ||
-          p.owner.toLowerCase().includes(lowerQuery)
+          p.owner.toLowerCase().includes(lowerQuery),
       );
     }
 
@@ -355,7 +369,7 @@ export class TaskManager {
       results.epics = data.epics.filter(
         (e) =>
           e.title.toLowerCase().includes(lowerQuery) ||
-          e.description.toLowerCase().includes(lowerQuery)
+          e.description.toLowerCase().includes(lowerQuery),
       );
     }
 
@@ -365,7 +379,7 @@ export class TaskManager {
           t.title.toLowerCase().includes(lowerQuery) ||
           t.description.toLowerCase().includes(lowerQuery) ||
           (t.assignee && t.assignee.toLowerCase().includes(lowerQuery)) ||
-          t.notes.some((n) => n.toLowerCase().includes(lowerQuery))
+          t.notes.some((n) => n.toLowerCase().includes(lowerQuery)),
       );
     }
 
@@ -375,7 +389,7 @@ export class TaskManager {
   async getTasksByStatus(
     status: Task["status"],
     epicId?: string,
-    assignee?: string
+    assignee?: string,
   ): Promise<Task[]> {
     const data = await this.loadData();
 
@@ -397,7 +411,7 @@ export class TaskManager {
     action: string,
     entityType: string,
     entity: PRD | Epic | Task,
-    oldEntity?: PRD | Epic | Task
+    oldEntity?: PRD | Epic | Task,
   ) {
     if (!this.resourceManager) return;
 
@@ -453,7 +467,10 @@ export class TaskManager {
   // Type guards for entities
   private isPRDEntity(entity: PRD | Epic | Task): entity is PRD {
     return (
-      "owner" in entity && "status" in entity && !("prd_id" in entity) && !("epic_id" in entity)
+      "owner" in entity &&
+      "status" in entity &&
+      !("prd_id" in entity) &&
+      !("epic_id" in entity)
     );
   }
 
@@ -467,7 +484,7 @@ export class TaskManager {
 
   private computeChanges(
     oldEntity: PRD | Epic | Task | undefined,
-    newEntity: PRD | Epic | Task
+    newEntity: PRD | Epic | Task,
   ): Record<string, { from: unknown; to: unknown }> | null {
     if (!oldEntity) return null;
 
@@ -516,7 +533,7 @@ const server = new Server(
         includeContexts: ["project", "dashboard", "metrics"],
       },
     },
-  }
+  },
 );
 
 server.setRequestHandler(ListToolsRequestSchema, () => {
@@ -579,9 +596,15 @@ server.setRequestHandler(ListToolsRequestSchema, () => {
               items: {
                 type: "object",
                 properties: {
-                  prd_id: { type: "string", description: "ID of the parent PRD" },
+                  prd_id: {
+                    type: "string",
+                    description: "ID of the parent PRD",
+                  },
                   title: { type: "string", description: "Epic title" },
-                  description: { type: "string", description: "Epic description" },
+                  description: {
+                    type: "string",
+                    description: "Epic description",
+                  },
                   priority: {
                     type: "string",
                     enum: ["low", "medium", "high"],
@@ -644,16 +667,28 @@ server.setRequestHandler(ListToolsRequestSchema, () => {
               items: {
                 type: "object",
                 properties: {
-                  epic_id: { type: "string", description: "ID of the parent epic" },
+                  epic_id: {
+                    type: "string",
+                    description: "ID of the parent epic",
+                  },
                   title: { type: "string", description: "Task title" },
-                  description: { type: "string", description: "Task description" },
+                  description: {
+                    type: "string",
+                    description: "Task description",
+                  },
                   priority: {
                     type: "string",
                     enum: ["low", "medium", "high"],
                     description: "Priority level",
                   },
-                  assignee: { type: "string", description: "Person assigned to the task" },
-                  due_date: { type: "string", description: "Due date in ISO format" },
+                  assignee: {
+                    type: "string",
+                    description: "Person assigned to the task",
+                  },
+                  due_date: {
+                    type: "string",
+                    description: "Due date in ISO format",
+                  },
                   dependencies: {
                     type: "array",
                     items: { type: "string" },
@@ -687,7 +722,10 @@ server.setRequestHandler(ListToolsRequestSchema, () => {
               description: "New priority",
             },
             assignee: { type: "string", description: "New assignee" },
-            due_date: { type: "string", description: "New due date in ISO format" },
+            due_date: {
+              type: "string",
+              description: "New due date in ISO format",
+            },
             dependencies: {
               type: "array",
               items: { type: "string" },
@@ -734,7 +772,10 @@ server.setRequestHandler(ListToolsRequestSchema, () => {
         inputSchema: {
           type: "object",
           properties: {
-            prd_id: { type: "string", description: "Optional PRD ID to read specific project" },
+            prd_id: {
+              type: "string",
+              description: "Optional PRD ID to read specific project",
+            },
           },
         },
       },
@@ -766,7 +807,10 @@ server.setRequestHandler(ListToolsRequestSchema, () => {
               description: "Task status to filter by",
             },
             epic_id: { type: "string", description: "Optional epic ID filter" },
-            assignee: { type: "string", description: "Optional assignee filter" },
+            assignee: {
+              type: "string",
+              description: "Optional assignee filter",
+            },
           },
           required: ["status"],
         },
@@ -803,10 +847,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               await taskManager.createPRD(
                 args.title as string,
                 args.description as string,
-                args.owner as string
+                args.owner as string,
               ),
               null,
-              2
+              2,
             ),
           },
         ],
@@ -818,7 +862,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         content: [
           {
             type: "text",
-            text: JSON.stringify(await taskManager.updatePRD(updateArgs.id, updateArgs), null, 2),
+            text: JSON.stringify(
+              await taskManager.updatePRD(updateArgs.id, updateArgs),
+              null,
+              2,
+            ),
           },
         ],
       };
@@ -827,7 +875,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     case "delete_prd":
       await taskManager.deletePRD(args.id as string);
       return {
-        content: [{ type: "text", text: "PRD and all associated items deleted successfully" }],
+        content: [
+          {
+            type: "text",
+            text: "PRD and all associated items deleted successfully",
+          },
+        ],
       };
 
     case "create_epics": {
@@ -848,7 +901,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         content: [
           {
             type: "text",
-            text: JSON.stringify(await taskManager.updateEpic(updateArgs.id, updateArgs), null, 2),
+            text: JSON.stringify(
+              await taskManager.updateEpic(updateArgs.id, updateArgs),
+              null,
+              2,
+            ),
           },
         ],
       };
@@ -857,7 +914,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     case "delete_epics":
       await taskManager.deleteEpics(args.ids as string[]);
       return {
-        content: [{ type: "text", text: "Epics and associated tasks deleted successfully" }],
+        content: [
+          {
+            type: "text",
+            text: "Epics and associated tasks deleted successfully",
+          },
+        ],
       };
 
     case "create_tasks": {
@@ -878,7 +940,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         content: [
           {
             type: "text",
-            text: JSON.stringify(await taskManager.updateTask(updateArgs.id, updateArgs), null, 2),
+            text: JSON.stringify(
+              await taskManager.updateTask(updateArgs.id, updateArgs),
+              null,
+              2,
+            ),
           },
         ],
       };
@@ -890,9 +956,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           {
             type: "text",
             text: JSON.stringify(
-              await taskManager.addTaskNotes(args.task_id as string, args.notes as string[]),
+              await taskManager.addTaskNotes(
+                args.task_id as string,
+                args.notes as string[],
+              ),
               null,
-              2
+              2,
             ),
           },
         ],
@@ -900,25 +969,38 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     case "delete_tasks":
       await taskManager.deleteTasks(args.ids as string[]);
-      return { content: [{ type: "text", text: "Tasks deleted successfully" }] };
+      return {
+        content: [{ type: "text", text: "Tasks deleted successfully" }],
+      };
 
     case "read_project":
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(await taskManager.readProject(args.prd_id as string), null, 2),
+            text: JSON.stringify(
+              await taskManager.readProject(args.prd_id as string),
+              null,
+              2,
+            ),
           },
         ],
       };
 
     case "search_items": {
-      const { query, item_type } = args as { query: string; item_type?: "prd" | "epic" | "task" };
+      const { query, item_type } = args as {
+        query: string;
+        item_type?: "prd" | "epic" | "task";
+      };
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(await taskManager.searchItems(query, item_type), null, 2),
+            text: JSON.stringify(
+              await taskManager.searchItems(query, item_type),
+              null,
+              2,
+            ),
           },
         ],
       };
@@ -937,7 +1019,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             text: JSON.stringify(
               await taskManager.getTasksByStatus(status, epic_id, assignee),
               null,
-              2
+              2,
             ),
           },
         ],
@@ -952,7 +1034,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             text: JSON.stringify(
               await taskManager.getTasksByAssignee(args.assignee as string),
               null,
-              2
+              2,
             ),
           },
         ],
