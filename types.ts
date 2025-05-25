@@ -142,7 +142,8 @@ export interface CreatePRDParams {
   owner: string;
 }
 
-export interface UpdatePRDParams extends Partial<Omit<PRD, "id" | "created_at">> {
+export interface UpdatePRDParams
+  extends Partial<Omit<PRD, "id" | "created_at">> {
   id: string;
 }
 
@@ -153,7 +154,8 @@ export interface CreateEpicParams {
   priority: "low" | "medium" | "high";
 }
 
-export interface UpdateEpicParams extends Partial<Omit<Epic, "id" | "prd_id" | "created_at">> {
+export interface UpdateEpicParams
+  extends Partial<Omit<Epic, "id" | "prd_id" | "created_at">> {
   id: string;
 }
 
@@ -167,7 +169,8 @@ export interface CreateTaskParams {
   dependencies?: string[];
 }
 
-export interface UpdateTaskParams extends Partial<Omit<Task, "id" | "epic_id" | "created_at">> {
+export interface UpdateTaskParams
+  extends Partial<Omit<Task, "id" | "epic_id" | "created_at">> {
   id: string;
 }
 

@@ -1,4 +1,7 @@
-import type { Resource, ResourceTemplate } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  Resource,
+  ResourceTemplate,
+} from "@modelcontextprotocol/sdk/types.js";
 import type { TaskManager } from "./index.js";
 import type {
   Subscription,
@@ -19,7 +22,11 @@ export class ResourceManager {
   }
 
   // Parse resource URIs
-  parseResourceUri(uri: string): { type: string; id?: string; params?: Record<string, string> } {
+  parseResourceUri(uri: string): {
+    type: string;
+    id?: string;
+    params?: Record<string, string>;
+  } {
     const url = new URL(uri);
     const type = url.protocol.slice(0, -1); // Remove ':'
     const pathParts = url.pathname.split("/").filter(Boolean);
@@ -78,7 +85,7 @@ export class ResourceManager {
 
     // Add dashboard resources for unique assignees
     const assignees = new Set(
-      data.tasks.map((t) => t.assignee).filter((a): a is string => Boolean(a))
+      data.tasks.map((t) => t.assignee).filter((a): a is string => Boolean(a)),
     );
     for (const assignee of assignees) {
       resources.push({
@@ -93,8 +100,10 @@ export class ResourceManager {
 
   // Read a resource
   async readResource(
-    uri: string
-  ): Promise<ProjectResource | DashboardResource | MetricsResource | EventStreamResource> {
+    uri: string,
+  ): Promise<
+    ProjectResource | DashboardResource | MetricsResource | EventStreamResource
+  > {
     const { type, id, params } = this.parseResourceUri(uri);
 
     switch (type) {
@@ -135,14 +144,18 @@ export class ResourceManager {
       // Add computed fields
       statistics: {
         totalEpics: projectData.epics.length,
-        totalTasks: projectData.epics.reduce((sum, e) => sum + e.tasks.length, 0),
+        totalTasks: projectData.epics.reduce(
+          (sum, e) => sum + e.tasks.length,
+          0,
+        ),
         completedTasks: projectData.epics.reduce(
           (sum, e) => sum + e.tasks.filter((t) => t.status === "done").length,
-          0
+          0,
         ),
         inProgressTasks: projectData.epics.reduce(
-          (sum, e) => sum + e.tasks.filter((t) => t.status === "in_progress").length,
-          0
+          (sum, e) =>
+            sum + e.tasks.filter((t) => t.status === "in_progress").length,
+          0,
         ),
       },
     };
@@ -161,7 +174,7 @@ export class ResourceManager {
    */
   private async getDashboardResource(
     assignee: string,
-    params: Record<string, string>
+    params: Record<string, string>,
   ): Promise<DashboardResource> {
     let tasks = await this.taskManager.getTasksByAssignee(assignee);
     const data = await this.taskManager.loadData();
@@ -206,7 +219,7 @@ export class ResourceManager {
         completedToday: tasks.filter(
           (t) =>
             t.status === "done" &&
-            new Date(t.updated_at).toDateString() === new Date().toDateString()
+            new Date(t.updated_at).toDateString() === new Date().toDateString(),
         ).length,
       },
       tasksByStatus,
@@ -214,7 +227,9 @@ export class ResourceManager {
         .filter((t) => t.due_date && new Date(t.due_date) > new Date())
         .sort((a, b) => {
           if (!a.due_date || !b.due_date) return 0;
-          return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+          return (
+            new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+          );
         })
         .slice(0, 5),
       projects: prds.map((prd) => ({
@@ -263,7 +278,9 @@ export class ResourceManager {
         percentComplete:
           epic.tasks.length > 0
             ? Math.round(
-                (epic.tasks.filter((t) => t.status === "done").length / epic.tasks.length) * 100
+                (epic.tasks.filter((t) => t.status === "done").length /
+                  epic.tasks.length) *
+                  100,
               )
             : 0,
       })),
@@ -299,7 +316,7 @@ export class ResourceManager {
   async subscribe(
     uri: string,
     clientId: string,
-    callback: (update: ResourceUpdate) => void
+    callback: (update: ResourceUpdate) => void,
   ): Promise<void> {
     if (!this.subscriptions.has(uri)) {
       this.subscriptions.set(uri, new Set());
@@ -351,13 +368,15 @@ export class ResourceManager {
     since.setDate(since.getDate() - days);
 
     const completedRecently = tasks.filter(
-      (t) => t.status === "done" && new Date(t.updated_at) >= since
+      (t) => t.status === "done" && new Date(t.updated_at) >= since,
     );
 
     return Math.round((completedRecently.length / days) * 7); // Weekly velocity
   }
 
-  private calculateTeamLoad(tasks: Task[]): Array<{ assignee: string; taskCount: number }> {
+  private calculateTeamLoad(
+    tasks: Task[],
+  ): Array<{ assignee: string; taskCount: number }> {
     const load: Record<string, number> = {};
 
     tasks
