@@ -2,6 +2,59 @@
 
 A Model Context Protocol server for managing Product Requirements Documents (PRDs), Epics, and Tasks in a hierarchical structure. This enables LLMs to create, track, and manage software development projects.
 
+## Data Model
+
+The system uses a hierarchical structure with three main entities:
+
+```mermaid
+erDiagram
+    PRD {
+        string id PK
+        string title
+        string description
+        enum status "draft, approved, in_progress, completed"
+        string owner
+        string created_at
+        string updated_at
+    }
+
+    EPIC {
+        string id PK
+        string prd_id FK
+        string title
+        string description
+        enum status "not_started, in_progress, completed"
+        enum priority "low, medium, high"
+        string created_at
+    }
+
+    TASK {
+        string id PK
+        string epic_id FK
+        string title
+        string description
+        enum status "todo, in_progress, review, done"
+        enum priority "low, medium, high"
+        string assignee "optional"
+        string due_date "optional"
+        string-array dependencies "task IDs"
+        string-array notes
+        string created_at
+        string updated_at
+    }
+
+    PRD ||--o{ EPIC : "contains"
+    EPIC ||--o{ TASK : "contains"
+    TASK }o--o{ TASK : "depends_on"
+```
+
+**Key Relationships:**
+
+- **PRD → Epic**: One-to-many (a PRD can contain multiple Epics)
+- **Epic → Task**: One-to-many (an Epic can contain multiple Tasks)
+- **Task → Task**: Many-to-many self-referencing (Tasks can depend on other Tasks)
+- **Cascading Deletes**: Removing a PRD deletes all its Epics and Tasks
+
 ## Core Concepts
 
 ### PRDs (Product Requirements Documents)
